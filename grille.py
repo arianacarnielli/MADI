@@ -5,7 +5,9 @@ Created on Mon Dec  7 21:01:59 2020
 @author: arian
 """
 import random
+import time
 import numpy as np
+import gurobipy as gp
 import tkinter as tk
 
 class Grille():
@@ -24,25 +26,29 @@ class Grille():
     nb_col : int
         Nombre de colonnes de la grille.
     couleurs : int
-        Quantité de couleurs possibles. The default is 4.
+        Quantité de couleurs possibles. Le défaut est 4.
     tab_cost : list(int)
         Liste des coûts de chaque couleur. Sa taille doit être égale au 
-        paramètre couleurs. The default is [1, 2, 3, 4].
+        paramètre couleurs. Le défaut est [1, 2, 3, 4].
+    p : float
+        Probabilité d’atteindre la case cible. Le défault vaut 1.
     proba_coul : list(float)
         Liste des probabilités pour l'occurrence de chaque couleur 
         (taille égale à la quantité de couleurs) si None, probabilité uniforme.
-        The default is None.
+        Le défaut est None.
     proba_mur : float
-        Probabilité d'occurrence des murs. The default is 0.
+        Probabilité d'occurrence des murs. Le défaut vaut 0.
         
     Attributes
-        ----------
+    ----------
     tab : numpy.ndarray
         Tableau représentant la grille. Chaque case contient un nombre 
         indiquant à quelle couleur la case est associée. Les cases avec -1 
         contiennent des murs.
     tab_cost : list(int)
         Liste des coûts de chaque couleur.
+    p : float
+        Probabilité d’atteindre la case cible.
     chiffre : numpy.ndarray
         Tableau représentant les prix de la grille. Commence comme None et doit
         être explicitement créé par la fonction gen_chiffre() avant d’être 
@@ -74,38 +80,131 @@ class Grille():
         ----------
         proba_nb : list(float)
             Liste des probabilités pour l'occurrence de chaque chiffre entre 1 
-            et 9. Si None, probabilité uniforme. The default is None.
+            et 9. Si None, probabilité uniforme. Le défault est None.
         """
         self.chiffre = np.random.choice(9, self.tab.shape, p = proba_nb) + 1
         
     def proba_trans(self, i, j, action):
-        if action == 0 and (i - 1) >= 0 and self.tab[i - 1, j] >= 0:
-            case_droite = int(self.tab.shape[1] > j + 1 and self.tab[i - 1, j + 1] >= 0)
-            case_gauche = int(j - 1 >= 0 and self.tab[i - 1, j - 1] >= 0)
+        """
+        Calcule les cases atteignables a partir d’une case (i, j) quelconque en
+        prenant l’action a, et les respectives probabilités.
+        
+        Parameters
+        ----------
+        i : int
+            Indice de ligne de la case.
+        j : int
+            Indice de colonne de la case.
+        a : int
+            L’action à réaliser. L’encodage est 0-haut, 1-droite, 2-bas,
+            3-gauche.
+            
+        Attributes
+        ----------
+        cases : List(tuple(int, int))
+            Liste des cases atteignables. 
+        p : List(float)
+            Liste des probabilités d’atteindre chaque case dans la liste cases.
+        """
+        
+        # On teste si la case cible est atteignable et après on calcule leur 
+        # voisinage dans le cas positif. Dans le cas negatif, on reste sur la
+        # case passé en argument.
+        if action == 0 and self.case_possible(i - 1, j):
+            case_droite = int(self.case_possible(i - 1, j + 1))
+            case_gauche = int(self.case_possible(i - 1, j - 1))
             cases = [(i - 1, j - case_gauche), (i - 1, j), (i - 1, j + case_droite)]
             p = [(1 - self.p) / 2, self.p, (1 - self.p) / 2]  
             
-        elif action == 1 and self.tab.shape[1] > j + 1 and self.tab[i, j + 1] >= 0:
-            case_bas = int(self.tab.shape[0] > i + 1 and self.tab[i + 1, j + 1] >= 0)
-            case_haut = int(i - 1 >= 0 and self.tab[i - 1, j + 1] >= 0)
+        elif action == 1 and self.case_possible(i, j + 1):
+            case_bas = int(self.case_possible(i + 1, j + 1))
+            case_haut = int(self.case_possible(i - 1, j + 1))
             cases = [(i - case_haut, j + 1), (i, j + 1), (i + case_bas, j + 1)]
             p = [(1 - self.p) / 2, self.p, (1 - self.p) / 2]
             
-        elif action == 2 and self.tab.shape[0] > i + 1 and self.tab[i + 1, j] >= 0:
-            case_droite = int(self.tab.shape[1] > j + 1 and self.tab[i + 1, j + 1] >= 0)
-            case_gauche = int(j - 1 >= 0 and self.tab[i + 1, j - 1] >= 0)
+        elif action == 2 and self.case_possible(i + 1, j):
+            case_droite = int(self.case_possible(i + 1, j + 1))
+            case_gauche = int(self.case_possible(i + 1, j - 1))
             cases = [(i + 1, j - case_gauche), (i + 1, j), (i + 1, j + case_droite)]
             p = [(1 - self.p) / 2, self.p, (1 - self.p) / 2]
 
-        elif action == 3 and (j - 1) >= 0 and self.tab[i, j - 1] >= 0:
-            case_bas = int(self.tab.shape[0] > i + 1 and self.tab[i + 1, j - 1] >= 0)
-            case_haut = int(i - 1 >= 0 and self.tab[i - 1, j - 1] >= 0)
+        elif action == 3 and self.case_possible(i, j - 1):
+            case_bas = int(self.case_possible(i + 1, j - 1))
+            case_haut = int(self.case_possible(i - 1, j - 1))
             cases = [(i - case_haut, j - 1), (i, j - 1), (i + case_bas, j - 1)]
             p = [(1 - self.p) / 2, self.p, (1 - self.p) / 2]
         else:
             cases = [(i, j)]
             p = [1]
         return cases, p
+    
+    def proba_trans_arr(self, i, j):
+        arr = {}
+        if self.case_possible(i - 1, j - 1):
+            if self.case_possible(i - 1, j):
+                arr[i - 1, j - 1, 1] = (1 - self.p)/2
+            if self.case_possible(i, j - 1):
+                arr[i - 1, j - 1, 2] = (1 - self.p)/2
+                
+        if self.case_possible(i - 1, j + 1):
+            if self.case_possible(i - 1, j):
+                arr[i - 1, j + 1, 3] = (1 - self.p)/2
+            if self.case_possible(i, j + 1):
+                arr[i - 1, j + 1, 2] = (1 - self.p)/2    
+                
+        if self.case_possible(i + 1, j + 1):
+            if self.case_possible(i, j + 1):
+                arr[i + 1, j + 1, 0] = (1 - self.p)/2
+            if self.case_possible(i + 1, j):
+                arr[i + 1, j + 1, 3] = (1 - self.p)/2
+                
+        if self.case_possible(i + 1, j - 1):
+            if self.case_possible(i, j - 1):
+                arr[i + 1, j - 1, 0] = (1 - self.p)/2
+            if self.case_possible(i + 1, j):
+                arr[i + 1, j - 1, 1] = (1 - self.p)/2
+                
+        if self.case_possible(i - 1, j):
+            arr[i - 1, j, 2] = self.p
+            if not self.case_possible(i, j - 1):
+                arr[i - 1, j, 2] += (1 - self.p)/2
+            if not self.case_possible(i, j + 1):
+                arr[i - 1, j, 2] += (1 - self.p)/2
+        else:
+            arr[i, j, 0] = 1        
+        
+        if self.case_possible(i, j + 1):
+            arr[i, j + 1, 3] = self.p
+            if not self.case_possible(i - 1, j):
+                arr[i, j + 1, 3] += (1 - self.p)/2
+            if not self.case_possible(i + 1, j):
+                arr[i, j + 1, 3] += (1 - self.p)/2
+        else:
+            arr[i, j, 1] = 1 
+                
+        if self.case_possible(i + 1, j):
+            arr[i + 1, j, 0] = self.p
+            if not self.case_possible(i, j - 1):
+                arr[i + 1, j, 0] += (1 - self.p)/2
+            if not self.case_possible(i, j + 1):
+                arr[i + 1, j, 0] += (1 - self.p)/2
+        else:
+            arr[i, j, 2] = 1 
+                
+        if self.case_possible(i, j - 1):
+            arr[i, j - 1, 1] = self.p
+            if not self.case_possible(i - 1, j):
+                arr[i, j - 1, 1] += (1 - self.p)/2
+            if not self.case_possible(i + 1, j):
+                arr[i, j - 1, 1] += (1 - self.p)/2
+        else:
+            arr[i, j, 3] = 1
+            
+        return arr
+        
+    def case_possible(self, i, j):
+        return i >= 0 and j >= 0 and i < self.tab.shape[0] and j < self.tab.shape[1] and self.tab[i, j] >= 0
+        
          
 class Visualisation():
     """
@@ -115,9 +214,32 @@ class Visualisation():
     robot par les flèches du clavier, en montrant les coûts accrus en temps 
     réel. On peut aussi visualiser des flèches indiquant l’action optimale 
     d’après une politique stationnaire déterministe et utiliser une politique 
-    déterministe ou mixte pour le guidage automatique du robot en utilisant 
-    la touche ‘espace’. 
-
+    déterministe ou mixte pour le guidage automatique du robot en tapant la 
+    touche ‘espace’. 
+    
+    Parameters
+    ----------
+    grille : Grille
+        La grille à visualiser. 
+    tab_coul : list(string)
+        List avec les codes hexadécimaux des couleurs utilisés dans la 
+        visualisation de la grille. Doit avoir au moins la même quantité que 
+        des couleurs dans la grille.
+        
+    Attributes
+    ----------
+    grille : Grille
+        La grille à visualiser. 
+    tab_coul : list(string)
+        List avec les codes hexadécimaux des couleurs utilisés dans la 
+        visualisation de la grille. Doit avoir au moins la même quantité que 
+        des couleurs dans la grille.
+    case_px : int
+        La taille en pixels d’une case de la grille. Le défaut est 40.
+    strategy : numpy.ndarray
+        Tableau représentant une stratégie. Chaque case contient soit un nombre
+        entre 0 et 3 indiquant à quelle case voisine le robot doit aller ou une
+        distribution de probabilités pour les cases voisines. 
     """
     
     def __init__(self, grille, tab_coul):   
@@ -127,115 +249,156 @@ class Visualisation():
         
         
     def view(self, case_px = 40, mode = "couleur", strategy = None):
-   
+        """
+        Créé une visualisation de la grille dans une fenêtre à l’aide du module
+        Tkinter. 
+
+        Parameters
+        ----------
+        case_px : int
+            La taille en pixels d’une case de la grille. Le défaut est 40.
+        mode : string
+            DESCRIPTION. The default is "couleur".
+        strategy : TYPE, optional
+            DESCRIPTION. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
         self.case_px = case_px
         self.strategy = strategy
         
-        self.largeur = (self.grille.tab.shape[1] * case_px) + 41
-        self.hauteur = (self.grille.tab.shape[0] * case_px) + 41
-        
-        self.window = tk.Tk()
-        self.window.title("MDP")
-        self.canevas = tk.Canvas(self.window, width = self.largeur, height = self.hauteur, bg = "#FFFFFF")
-        self.canevas.focus_set()
-        self.canevas.bind('<Key>', self.clavier)
-        self.canevas.pack(padx = 5, pady = 5)
-        
-        w1 = tk.Label(self.window, text = "Costs: ", fg = "#5E5E64", font = "Verdana " + str(int(-0.5 * self.case_px)) + " bold")
+        # On crée la fenêtre de visualisation
+        largeur = (self.grille.tab.shape[1] * self.case_px) + 41
+        hauteur = (self.grille.tab.shape[0] * self.case_px) + 41
+        window = tk.Tk()
+        window.title("MDP")
+        self._canevas = tk.Canvas(window, width = largeur, height = hauteur, bg = "#FFFFFF")
+        self._canevas.focus_set()
+        self._canevas.bind('<Key>', self._clavier)
+        self._canevas.pack(padx = 5, pady = 5)
+        w1 = tk.Label(window, text = "Costs: ", fg = "#5E5E64", font = "Verdana " + str(int(-0.5 * self.case_px)) + " bold")
         w1.pack(side = tk.LEFT, padx = 5, pady = 5) 
-        self.totalcosts = None
         
-        self.costs = []
-        self.costs_labels = []
-        self.x0 = 20
-        self.y0 = 20
+        # Text où on montre la valeur totale des coûts pour la grille de type "chiffre"
+        self._totalcosts = None 
+        # On garde ici le(s) coût(s) 
+        self._costs = []
+        # On garde ici les texts pour montrer le(s) coût(s)
+        self._costs_labels = []
+        
+        # Coordonées du haut à gauche de la case de départ
+        self._x0 = 20
+        self._y0 = 20
      
-        self.dessin_grid()
+        # On dessine la grille
+        self.dessin_grid(largeur, hauteur)
+        
+        # Si on a une stratégie passé en argument et si c'est une stratégie déterministe alors on dessine des flèches indiquant où aller
         if strategy is not None and strategy.ndim == 2:
-            self.direct = ["\u2191", "\u2192", "\u2193", "\u2190"]
+            # Code ASCII des flèches
+            self._direct = ["\u2191", "\u2192", "\u2193", "\u2190"]
             self.dessin_fleche() 
         
+        # Correspond à la grille présenté dans la partie 2 du projet
         if mode == "couleur":
             self.dessin_couleur()
-            self.costs.append(0)
-            wg = tk.Label(self.window, text = self.costs[0], fg = "#5E5E64", font = "Verdana " + str(int(-0.5 * self.case_px)) + " bold")
+            self._costs.append(0)
+            wg = tk.Label(window, text = self._costs[0], fg = "#5E5E64", font = "Verdana " + str(int(-0.5 * self.case_px)) + " bold")
             wg.pack(side = tk.LEFT, padx = 5, pady = 5)
-            self.costs_labels.append(wg)
-             
+            self._costs_labels.append(wg)
+            
+        # Correspond à la grille présenté dans la partie 3 du projet     
         elif mode == "chiffre":
             self.dessin_chiffre()
             for i in range(len(self.tab_coul)):
-                self.costs.append(0)
-                wg = tk.Label(self.window, text = self.costs[i], fg = self.tab_coul[i], font = "Verdana " + str(int(-0.5 * self.case_px)) + " bold")
+                self._costs.append(0)
+                wg = tk.Label(window, text = self._costs[i], fg = self.tab_coul[i], font = "Verdana " + str(int(-0.5 * self.case_px)) + " bold")
                 wg.pack(side = tk.LEFT, padx = 5, pady = 5) 
-                self.costs_labels.append(wg)
-            w2 = tk.Label(self.window, text = "Total costs: ", fg = "#5E5E64", font = "Verdana " + str(int(-0.5 * self.case_px)) + " bold")
+                self._costs_labels.append(wg)
+            w2 = tk.Label(window, text = "Total costs: ", fg = "#5E5E64", font = "Verdana " + str(int(-0.5 * self.case_px)) + " bold")
             w2.pack(side = tk.LEFT, padx = 5, pady = 5) 
-            self.totalcosts = tk.Label(self.window, text = str(sum(self.costs)), fg = "#5E5E64", font = "Verdana " + str(int(-0.5 * self.case_px)) + " bold")
-            self.totalcosts.pack(side = tk.LEFT, padx = 5, pady = 5) 
+            self._totalcosts = tk.Label(window, text = str(sum(self._costs)), fg = "#5E5E64", font = "Verdana " + str(int(-0.5 * self.case_px)) + " bold")
+            self._totalcosts.pack(side = tk.LEFT, padx = 5, pady = 5) 
 
-        self.pion = self.canevas.create_oval(self.x0, self.y0, self.x0 + self.case_px, self.y0 + self.case_px, width = 2, outline = "black", fill = "yellow")
+        # Le robot 
+        self._pion = self._canevas.create_oval(self._x0, self._y0, self._x0 + self.case_px, self._y0 + self.case_px, width = 2, outline = "black", fill = "yellow")
+        
+        # Si on dessine les flèches de la stratégie, alors on dessine aussi une flèche specialle sur le robot pour que l'action optimale reste visible 
         if strategy is not None and strategy.ndim == 2: 
-            self.canevas.tag_raise(self.fleche_pion)
-        tk.Button(self.window, text = "Quit", command = self.window.destroy).pack(side = tk.RIGHT, padx = 5, pady = 5)
-        tk.Button(self.window, text = "Restart", command = self.initialize).pack(side = tk.RIGHT, padx = 5, pady = 5)
+            self._canevas.tag_raise(self.fleche_pion)
+        
+        # Boutons pour fermer la fenêtre et pour reinicialiser le parcours du robot
+        tk.Button(window, text = "Quit", command = window.destroy).pack(side = tk.RIGHT, padx = 5, pady = 5)
+        tk.Button(window, text = "Restart", command = self._reinitialize).pack(side = tk.RIGHT, padx = 5, pady = 5)
 
-        self.canevas.focus_set()
-        self.window.mainloop()
+        # On montre la grille
+        self._canevas.focus_set()
+        window.mainloop()
 
                 
-    def initialize(self):
-        # cout et affichage
-        self.x0 = 20
-        self.y0 = 20
-        self.canevas.coords(self.pion, self.x0, self.y0, self.x0 + self.case_px, self.y0 + self.case_px)
-        
-        for i in range(len(self.costs_labels)):
-            self.costs[i] = 0
-            self.costs_labels[i].config(text = str(self.costs[i]))
-        if self.totalcosts is not None:
-            self.totalcosts.config(text = str(sum(self.costs)))
+    def _reinitialize(self):
+        """
+        Réinitialise la visualisation de la grille. 
+        """
+        self._x0 = 20
+        self._y0 = 20
+        self._canevas.coords(self._pion, self._x0, self._y0, self._x0 + self.case_px, self._y0 + self.case_px)
+        for i in range(len(self._costs_labels)):
+            self._costs[i] = 0
+            self._costs_labels[i].config(text = str(self._costs[i]))
+        if self._totalcosts is not None:
+            self._totalcosts.config(text = str(sum(self._costs)))
             
-    def clavier(self, event):
+    def _clavier(self, event):
+        """
+        Controle du robot par les flèches du clavier et action automatique 
+        d'après une stratégie avec la touche espace. 
+        """
+        # Traduction des touches vers les chiffres
         dict_dir = {"Up": 0, "Right": 1, "Down": 2, "Left": 3}
         touche = event.keysym
+        # Si une des flèches, on la passe à la fonction move directement
         if touche in dict_dir:
             self.move(dict_dir[touche])
+        # Sinon et si on a une stratégie, on tire une flèche soit de façon déterministe, soit d'après la loi de probabilité de la case courante 
         elif touche == "space" and self.strategy is not None:
-            j = round((self.x0 - 20) / self.case_px)
-            i = round((self.y0 - 20) / self.case_px)
+            j = round((self._x0 - 20) / self.case_px)
+            i = round((self._y0 - 20) / self.case_px)
             strat = self.strategy[i,j]
             if self.strategy.ndim != 2:
                 strat = np.random.choice(4, p = strat)  
             self.move(strat)
         
     def move(self, action):
-        j = round((self.x0 - 20) / self.case_px)
-        i = round((self.y0 - 20) / self.case_px)
+        j = round((self._x0 - 20) / self.case_px)
+        i = round((self._y0 - 20) / self.case_px)
     
         cases, p = self.grille.proba_trans(i, j, action)
         place = random.choices(cases, p)[0]
 
         if place == (i, j):
             return
-        self.x0 = 20 + place[1] * self.case_px
-        self.y0 = 20 + place[0] * self.case_px
+        self._x0 = 20 + place[1] * self.case_px
+        self._y0 = 20 + place[0] * self.case_px
         
-        self.canevas.coords(self.pion, self.x0, self.y0, self.x0 + self.case_px, self.y0 + self.case_px)
+        self._canevas.coords(self._pion, self._x0, self._y0, self._x0 + self.case_px, self._y0 + self.case_px)
 
         if place is not None:
             if self.strategy is not None and self.strategy.ndim == 2:
-                self.canevas.itemconfig(self.fleche_pion, text = self.direct[self.strategy[place]])
-                self.canevas.coords(self.fleche_pion, self.x0 + self.case_px // 2, self.y0 + self.case_px // 2) 
-            if self.totalcosts is not None:
+                self._canevas.itemconfig(self.fleche_pion, text = self._direct[self.strategy[place]])
+                self._canevas.coords(self.fleche_pion, self._x0 + self.case_px // 2, self._y0 + self.case_px // 2) 
+            if self._totalcosts is not None:
                 indice = self.grille.tab[place]
-                self.costs[indice] += self.grille.chiffre[place]
-                self.costs_labels[indice].config(text = str(self.costs[indice]))
-                self.totalcosts.config(text = str(sum(self.costs)))
+                self._costs[indice] += self.grille.chiffre[place]
+                self._costs_labels[indice].config(text = str(self._costs[indice]))
+                self._totalcosts.config(text = str(sum(self._costs)))
             else:
                 indice = 0
-                self.costs[indice] += self.grille.tab_cost[self.grille.tab[place]]
-                self.costs_labels[indice].config(text = str(self.costs[indice]))
+                self._costs[indice] += self.grille.tab_cost[self.grille.tab[place]]
+                self._costs_labels[indice].config(text = str(self._costs[indice]))
  
     def dessin_fleche(self):
         for i in range(self.grille.tab.shape[0]):
@@ -246,17 +409,17 @@ class Visualisation():
                     xc = x0 + self.case_px // 2
                     yc = y0 + self.case_px // 2
                     
-                    self.canevas.create_text(xc, yc, anchor = "center", text = self.direct[self.strategy[i,j]], fill = "#C8C8C8", font = "Verdana " + str(int(-0.9 * self.case_px)) + " bold")                    
+                    self._canevas.create_text(xc, yc, anchor = "center", text = self._direct[self.strategy[i,j]], fill = "#C8C8C8", font = "Verdana " + str(int(-0.9 * self.case_px)) + " bold")                    
 
-        self.fleche_pion = self.canevas.create_text(20 + self.case_px // 2, 20 + self.case_px // 2, anchor = "center", text = self.direct[self.strategy[0,0]], fill = "#C8C8C8", font = "Verdana " + str(int(-0.9 * self.case_px)) + " bold")                    
+        self.fleche_pion = self._canevas.create_text(20 + self.case_px // 2, 20 + self.case_px // 2, anchor = "center", text = self._direct[self.strategy[0,0]], fill = "#C8C8C8", font = "Verdana " + str(int(-0.9 * self.case_px)) + " bold")                    
      
-    def dessin_grid(self):
+    def dessin_grid(self, largeur, hauteur):
         for i in range(self.grille.tab.shape[0] + 1):
             ni = self.case_px * i
-            self.canevas.create_line(20, ni + 20, self.largeur - 20, ni + 20)
+            self._canevas.create_line(20, ni + 20, largeur - 20, ni + 20)
         for j in range(self.grille.tab.shape[1] + 1):
             nj = self.case_px * j
-            self.canevas.create_line(nj + 20, 20, nj + 20, self.hauteur - 20)
+            self._canevas.create_line(nj + 20, 20, nj + 20, hauteur - 20)
     
     def dessin_couleur(self):
         circle = max(self.case_px // 6, 2)
@@ -269,9 +432,9 @@ class Visualisation():
                     c = self.tab_coul[self.grille.tab[i,j]]
                     xc = x0 + self.case_px // 2
                     yc = y0 + self.case_px // 2
-                    self.canevas.create_oval(xc - circle , yc - circle, xc + circle, yc + circle, width = 1, outline = c, fill = c)
+                    self._canevas.create_oval(xc - circle , yc - circle, xc + circle, yc + circle, width = 1, outline = c, fill = c)
                 else:
-                    self.canevas.create_rectangle(x0, y0, x0 + self.case_px, y0 + self.case_px, fill = "#5E5E64")
+                    self._canevas.create_rectangle(x0, y0, x0 + self.case_px, y0 + self.case_px, fill = "#5E5E64")
         
     def dessin_chiffre(self):
 
@@ -286,19 +449,20 @@ class Visualisation():
                     xc = x0 + self.case_px // 2
                     yc = y0 + self.case_px // 2
                     
-                    self.canevas.create_text(xc, yc, anchor = "center", text = str(self.grille.chiffre[i,j]),fill = c, font = "Verdana " + str(int(-0.5 * self.case_px)) + " bold")
+                    self._canevas.create_text(xc, yc, anchor = "center", text = str(self.grille.chiffre[i,j]),fill = c, font = "Verdana " + str(int(-0.5 * self.case_px)) + " bold")
                 else:
-                    self.canevas.create_rectangle(x0, y0, x0 + self.case_px, y0 + self.case_px, fill = "#5E5E64")       
+                    self._canevas.create_rectangle(x0, y0, x0 + self.case_px, y0 + self.case_px, fill = "#5E5E64")       
 
 def pol_valeur(grille, gamma, M, eps = 1e-5):
     vs = np.zeros(grille.tab.shape)
-    vs[-1, -1] = M
+    vs[-1, -1] = M / (1 - gamma)
     erreur = 1 + eps
+    cpt = 0
     while erreur > eps:
         erreur = 0
         for i in range(vs.shape[0]):
             for j in range(vs.shape[1]):
-                if grille.tab[i,j] >= 0 and (i, j) != (vs.shape[0] - 1, vs.shape[1] - 1):
+                if grille.tab[i, j] >= 0 and (i, j) != (vs.shape[0] - 1, vs.shape[1] - 1):
                     qat = - np.inf
                     cout = grille.tab_cost[grille.tab[i, j]]
                     for a in range(4):
@@ -308,12 +472,13 @@ def pol_valeur(grille, gamma, M, eps = 1e-5):
                     new_vs = - cout + gamma * qat
                     erreur = max(erreur, abs(vs[i, j] - new_vs))
                     vs[i, j] = new_vs
+        cpt += 1
                     
     pol = np.zeros(grille.tab.shape, dtype = int)
     pol[-1, -1] = 1
     for i in range(vs.shape[0]):
         for j in range(vs.shape[1]):
-            if grille.tab[i,j] >= 0 and (i, j) != (vs.shape[0] - 1, vs.shape[1] - 1):
+            if grille.tab[i, j] >= 0 and (i, j) != (vs.shape[0] - 1, vs.shape[1] - 1):
                 qat = - np.inf
                 for a in range(4):
                     cases, proba = grille.proba_trans(i, j, a)
@@ -321,7 +486,60 @@ def pol_valeur(grille, gamma, M, eps = 1e-5):
                     if q > qat:
                         qat = q
                         pol[i, j] = a
-    return pol, vs
+    return pol, cpt
+
+
+def pol_pl_mixte(grille, gamma, M, verbose = False):
+    # On créé le pl
+    pl = gp.Model("mixte")
+    if not verbose:
+        pl.setParam("OutputFlag", 0)
+    lig, col = grille.tab.shape
+    
+    # On créé les variables et coefficients de la fonction objectif
+    var, reward = gp.multidict({(i, j, a): -grille.tab_cost[grille.tab[i, j]] 
+                                for i in range(lig) 
+                                for j in range(col) 
+                                for a in range(4) 
+                                if grille.tab[i, j] >= 0})
+    
+    # On reajuste le coefficient de la case but 
+    for a in range(4):
+        reward[(lig - 1, col - 1, a)] = M
+        
+    # On ajoute les variables et la fonction objectif
+    xsa = pl.addVars(var, name = "x")
+    pl.setObjective(xsa.prod(reward), gp.GRB.MAXIMIZE)
+    
+    # On ajoute les contraintes
+    pl.addConstrs((xsa.sum(i, j, "*") - gamma * 
+                   xsa.prod(grille.proba_trans_arr(i, j)) == 1 
+                  for i in range(lig) 
+                  for j in range(col)  
+                  if grille.tab[i, j] >= 0), "contr")
+    # L'optimisation
+    pl.optimize()
+    # On créé les probabilités
+    strat = None
+    # On teste si on a une vrai solution
+    if pl.status == gp.GRB.OPTIMAL:
+        # Recuperation des solutions
+        strat = np.ones((*grille.tab.shape, 4))
+        solution = pl.getAttr("x", xsa)
+        for key, val in solution.items():
+            strat[key] = val
+        # Normalisation pour trouver les probabilités
+        strat = strat / strat.sum(2).reshape((lig, col, 1))  
+    return strat
+
+def tester_temps(fonction, list_grille, repeat = 10, **kwargs):
+    temps = time.process_time()
+    for grille in list_grille:
+        for _ in range(repeat):
+            fonction(grille, **kwargs)
+    temps = time.process_time() - temps 
+    return temps / (len(list_grille) * repeat)
+    
         
 if __name__ == "__main__":
     
@@ -338,14 +556,23 @@ if __name__ == "__main__":
     cost = [1, 2, 3, 4]
     width = 20
     height = 10
+    gamma = 0.9
+    M = 1000
+    
     strategy_pur = np.random.choice(4, (height, width))
     strategy_mixte = np.random.uniform(size = (height, width, 4))
     strategy_mixte = strategy_mixte / strategy_mixte.sum(2).reshape((height, width, 1))
     strategy_mixte2 = np.ones((height, width, 4))/4
     
+   
     g = Grille(height, width, tab_cost = cost, p = 0.7, proba_mur = 0.1)
     g.gen_chiffre()
+    
+    strategy_valeur, nb_iter =  pol_valeur(g, gamma = gamma, M = M)
+    strategy_pl_mixte = pol_pl_mixte(g, gamma = gamma, M = M)
+    
+        
     v = Visualisation(g, color)
-    v.view(case_px = 50, mode = "couleur", strategy = strategy_mixte2)
+    #v.view(case_px = 50, mode = "couleur", strategy = strategy_valeur)
         
         
