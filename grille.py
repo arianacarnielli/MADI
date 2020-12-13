@@ -26,8 +26,6 @@ class Grille():
         Nombre de lignes de la grille.
     nb_col : int
         Nombre de colonnes de la grille.
-    couleurs : int
-        Quantité de couleurs possibles. Le défaut est 4.
     tab_cost : list(int)
         Liste des coûts de chaque couleur. Sa taille doit être égale au 
         paramètre couleurs. Le défaut est [1, 2, 3, 4].
@@ -58,11 +56,10 @@ class Grille():
         chiffre entre 1 et 9.
     """
     
-    def __init__(self, nb_lig, nb_col, couleurs = 4, tab_cost = [1, 2, 3, 4], p = 1, proba_coul = None, proba_mur = 0, proba_nb = None):
-        
+    def __init__(self, nb_lig, nb_col, tab_cost = [1, 2, 3, 4], p = 1, proba_coul = None, proba_mur = 0, proba_nb = None):
+        couleurs = len(tab_cost)
         #On confirme que les tailles sont bonnes
         assert (proba_coul is None) or (len(proba_coul) == couleurs), "Tableau des probabilités des couleurs avec la mauvaise taille"   
-        assert (len(tab_cost) == couleurs)
         
         #On calcule les probabilités des couleurs et murs (les probas des couleurs sont conditionnelles au début)
         proba_tab = np.empty(couleurs + 1)
@@ -394,13 +391,13 @@ class Visualisation():
             self._canevas.coords(self.fleche_pion, self._x0 + self.case_px // 2, self._y0 + self.case_px // 2) 
         
         if self._totalcosts is not None:
-            indice = self.grille.tab[place]
-            self._costs[indice] += self.grille.case_cout(*place, "somme_chiffre")
+            indice = self.grille.tab[i, j]
+            self._costs[indice] += self.grille.case_cout(i, j, "somme_chiffre")
             self._costs_labels[indice].config(text = str(self._costs[indice]))
             self._totalcosts.config(text = str(sum(self._costs)))
         else:
             indice = 0
-            self._costs[indice] += self.grille.case_cout(*place, "couleur")
+            self._costs[indice] += self.grille.case_cout(i, j, "couleur")
             self._costs_labels[indice].config(text = str(self._costs[indice]))
  
     def dessin_fleche(self):
@@ -585,6 +582,60 @@ def pol_pl_pure(grille, gamma, M, verbose = False, mode = "couleur"):
     return strat
 
 
+def pol_pl_mixte_mo(grille, gamma, M, verbose = False):
+    # On créé le pl
+    pl = gp.Model("mixte")
+    if not verbose:
+        pl.setParam("OutputFlag", 0)
+    lig, col = grille.tab.shape
+    
+    # On créé les variables et coefficients de la fonction objectif
+    var, reward = gp.multidict({(i, j, a): - grille.case_cout(i, j, "somme_chiffre")  
+                                for i in range(lig) 
+                                for j in range(col) 
+                                for a in range(4) 
+                                if grille.tab[i, j] >= 0})
+    
+    # On reajuste le coefficient de la case but 
+    for a in range(4):
+        reward[(lig - 1, col - 1, a)] = M
+        
+    # On ajoute les variables et la fonction objectif
+    xsa = pl.addVars(var, name = "x")
+    z = pl.addVar(lb = -float("inf"), name = "z")
+    
+    pl.setObjective(z, gp.GRB.MAXIMIZE)
+    
+    # On ajoute les contraintes liées aux xsa
+    pl.addConstrs((xsa.sum(i, j, "*") - gamma * 
+                   xsa.prod(grille.proba_trans_arr(i, j)) == 4 / len(var) 
+                  for i in range(lig) 
+                  for j in range(col)  
+                  if grille.tab[i, j] >= 0), "contr")
+    
+    # On ajoute les contraintes lieés à z
+    for c in range(len(grille.tab_cost)):
+        reward_c = dict(filter(lambda item: grille.tab[item[0][0], item[0][1]] == c, reward.items()))
+        for a in range(4):
+            reward_c[(lig - 1, col - 1, a)] = M
+        pl.addConstr(z <= xsa.prod(reward_c), "contr_color_" + str(c))
+    
+    # L'optimisation
+    pl.optimize()
+    # On créé les probabilités
+    strat = None
+    # On teste si on a une vrai solution
+    if pl.status == gp.GRB.OPTIMAL:
+        # Recuperation des solutions
+        strat = np.ones((*grille.tab.shape, 4))
+        solution = pl.getAttr("x", xsa)
+        for key, val in solution.items():
+            strat[key] = val
+        # Normalisation pour trouver les probabilités
+        strat = strat / strat.sum(2).reshape((lig, col, 1))  
+    return strat
+
+
 def tester_temps(fonction, list_grille, repeat = 10, **kwargs):
     temps = time.process_time()
     for grille in list_grille:
@@ -607,7 +658,7 @@ if __name__ == "__main__":
     nb_color = 4
     color = [green, blue, red, darkgray]
     cost = [1, 2, 3, 4]
-    width = 20
+    width = 10
     height = 10
     gamma = 0.9
     M = 1000
@@ -618,11 +669,12 @@ if __name__ == "__main__":
     strategy_mixte2 = np.ones((height, width, 4))/4
     
    
-    g = Grille(height, width, tab_cost = cost, p = 0.7, proba_mur = 0.1)
+    g = Grille(height, width, tab_cost = cost, p = 1, proba_mur = 0.1)
     
     strategy_valeur, nb_iter =  pol_valeur(g, gamma = gamma, M = M)
     strategy_pl_mixte = pol_pl_mixte(g, gamma = gamma, M = M)
     strategy_pl_pure = pol_pl_pure(g, gamma = gamma, M = M)
+    s = pol_pl_mixte_mo(g, gamma, M)
     
         
     v = Visualisation(g, color)
