@@ -366,7 +366,7 @@ class Visualisation():
             
         # Correspond à la grille présenté dans la partie 4 du projet     
         elif mode == "chiffre":
-            self.dessin_chiffre()
+            self._dessin_chiffre()
             # On a un coût séparé par couleur
             for i in range(len(self.tab_coul)):
                 self._costs.append(0)
@@ -506,7 +506,7 @@ class Visualisation():
                 else:
                     self._canevas.create_rectangle(x0, y0, x0 + self.case_px, y0 + self.case_px, fill = "#5E5E64")
         
-    def dessin_chiffre(self):
+    def _dessin_chiffre(self):
         """
         Dessine les cases de la grille dans le mode 'chiffre'. On a un chiffre
         coloré dans chaque case. 
