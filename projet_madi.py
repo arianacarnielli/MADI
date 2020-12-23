@@ -128,7 +128,7 @@ class Grille():
 
         else:
             cases_p[(i, j)] = 1
-
+        
         return cases_p
     
     def proba_trans_arr(self, i, j):
@@ -258,7 +258,31 @@ class Grille():
             return self.tab_cost[self.tab[i, j]]
         elif mode == "somme_chiffre":
             return self.chiffre[i, j]
-            
+        
+    def est_possible(self):
+        """
+        Teste si la case but de la grille est atteignable depuis la case 
+        initiale (plus en haut et à gauche).
+
+        Returns
+        -------
+        _ : bool
+            True si la case but est atteignable, False sinon.
+
+        """
+        if self.tab[0, 0] == -1 or self.tab[-1, -1] == -1:
+            return False
+        pile = [(0, 0)]
+        visites = set()
+        while pile:
+            i, j = pile.pop()
+            if (i + 1, j + 1) == self.tab.shape:
+                return True
+            visites.add((i, j))
+            for k, l in [(i - 1, j), (i, j + 1), (i + 1, j), (i, j - 1)]:
+                if self.case_possible(k, l) and (k, l) not in visites:
+                    pile.append((k, l))
+        return False
          
 class Visualisation():
     """
@@ -406,6 +430,10 @@ class Visualisation():
             self._costs_labels[i].config(text = str(self._costs[i]))
         if self._totalcosts is not None:
             self._totalcosts.config(text = str(sum(self._costs)))
+        # Si on dessine les flèches de la stratégie, alors on dessine aussi une flèche specialle sur le robot pour que l'action optimale reste visible 
+        if self.strategy is not None and self.strategy.ndim == 2: 
+            self._canevas.itemconfig(self.fleche_pion, text = self._direct[self.strategy[0, 0]])
+            self._canevas.coords(self.fleche_pion, self._x0 + self.case_px // 2, self._y0 + self.case_px // 2) 
             
     def _clavier(self, event):
         """
@@ -576,7 +604,7 @@ def pol_valeur(grille, gamma, M, eps = 1e-5, mode = "couleur"):
                     erreur = max(erreur, abs(vs[i, j] - new_vs))
                     vs[i, j] = new_vs
         cpt += 1
-                    
+     
     pol = np.zeros(grille.tab.shape, dtype = int)
     pol[-1, -1] = 1
     for i in range(vs.shape[0]):
@@ -829,6 +857,7 @@ def pol_pl_mixte_mo(grille, gamma, M, verbose = False):
 
 def tester_temps(fonction, list_grille, repeat = 10, **kwargs):
     """
+    Implémente le test de temps de calcul moyen démandé à l'énoncé.
     
     Parameters
     ----------
@@ -854,6 +883,31 @@ def tester_temps(fonction, list_grille, repeat = 10, **kwargs):
             fonction(grille, **kwargs)
     temps = time.process_time() - temps 
     return temps / (len(list_grille) * repeat)
+
+def tester_iterations(fonction, list_grille, **kwargs):
+    """
+    Implémente le test de quantité d'itérations moyenne démandé à l'énoncé.
+    
+    Parameters
+    ----------
+    fonction : Function
+        La fonction qu'on veut tester le temps d'exécution. Il faut qu'elle 
+        prenne une grille en argument.
+    list_grille : list(Grille)
+        Liste avec toutes les Grilles qui doivent être testés.
+    **kwargs : 
+        Keyword arguments necessaires à la fonction testée.
+
+    Returns
+    -------
+    float
+        Le nombre moyen d'itérations de la fonction passée en argument.
+    """
+    cpt_iter = 0
+    for grille in list_grille:
+        _, nb_iter = fonction(grille, **kwargs)
+        cpt_iter += nb_iter
+    return cpt_iter / (len(list_grille))
     
         
 if __name__ == "__main__":
@@ -869,8 +923,8 @@ if __name__ == "__main__":
     nb_color = 4
     color = [green, blue, red, darkgray]
     cost = [1, 2, 3, 4]
-    width = 10
-    height = 10
+    width = 5
+    height = 5
     gamma = 0.9
     M = 1000
     
@@ -880,7 +934,7 @@ if __name__ == "__main__":
     strategy_mixte2 = np.ones((height, width, 4))/4
     
    
-    g = Grille(height, width, tab_cost = cost, p = 1, proba_mur = 0.1)
+    g = Grille(height, width, tab_cost = cost, p = 0.6, proba_mur = 0.1)
     
     strategy_valeur, nb_iter =  pol_valeur(g, gamma = gamma, M = M)
     strategy_pl_mixte = pol_pl_mixte(g, gamma = gamma, M = M)
