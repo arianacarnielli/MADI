@@ -384,6 +384,7 @@ class Visualisation():
             self._totalcosts = None 
             self._dessin_couleur()
             self._costs.append(0)
+            print("self._costs ", self._costs)
             wg = tk.Label(window, text = self._costs[0], fg = "#5E5E64", font = "Verdana " + str(int(-0.5 * self.case_px)) + " bold")
             wg.pack(side = tk.LEFT, padx = 5, pady = 5)
             self._costs_labels.append(wg)
@@ -688,6 +689,7 @@ def pol_pl_mixte(grille, gamma, M, mode = "couleur", verbose = False):
         # Recuperation des solutions
         strat = np.ones((*grille.tab.shape, 4))
         solution = pl.getAttr("x", xsa)
+        print('Obj: %g' % pl.objVal)
         for key, val in solution.items():
             strat[key] = val
         # Normalisation pour trouver les probabilités
@@ -770,6 +772,8 @@ def pol_pl_pure(grille, gamma, M, mode = "couleur", verbose = False):
         # Recuperation des solutions
         strat = np.zeros(grille.tab.shape, dtype = int)
         solution = pl.getAttr("x", dsa)
+#        print(print('Obj: %g' % m.objVal))
+        print('Obj: %g' % pl.objVal)
         for (i, j, a), val in solution.items():
             if val == 1:
                 strat[i, j] = a
@@ -908,7 +912,87 @@ def tester_iterations(fonction, list_grille, **kwargs):
         _, nb_iter = fonction(grille, **kwargs)
         cpt_iter += nb_iter
     return cpt_iter / (len(list_grille))
+
+def calcul_cout_pol(grille, strategy):
+    """
+    Implémente le calcul de la valeur de la politique optimale.
     
+    Parameters
+    ----------
+    strategy : 
+        Politique issue de la grille
+    grille : 
+        Grille dont on doit calculer la valeur de la politique.
+    
+
+    Returns
+    -------
+    int
+        La valeur de la politique executée sur la grille passée en argument.
+    """
+    if (grille is  None ) or (strategy is  None ):
+        return 0
+    else:
+        cout_total = 0
+        if len(strategy.shape)== 2:
+            i,j = 0,0
+            b = True 
+            while b:
+
+                if ((i,j) == (grille.shape[0] - 1 , grille.shape[1] - 1) ):
+                    print ("(i,j)", (i,j))
+                    b = False
+                    return cout_total
+                    break
+                else:
+                    
+                    if grille [i,j] == -1 : #mur
+                        return -1
+                        break
+                    else:
+                        cout_total += (grille [i,j] +1)
+                        if (strategy[i,j]) == 0:
+    #                        cout_total += (grille [i,j] +1)
+                            if( i > 0 ) : 
+                                i -= 1 
+                            else:
+                                return 0
+                                break
+                        elif (strategy[i,j]) == 1:
+                            if( j < (grille.shape[1] - 1)) : 
+                                j += 1 
+                            else:
+                                return 0
+                                break
+    #                            cout_total += (grille [i,j] +1)
+                                            
+                                            
+                        elif (strategy[i,j]) == 2:
+                            if( i < (grille.shape[0] - 1)) : 
+                                i += 1 
+                            else:
+                                return 0
+                                break
+    #                        cout_total += (grille [i,j] +1)
+                        elif (strategy[i,j]) == 3:
+    #                        cout_total += (grille [i,j] +1)
+                            if( j > 0 ) : 
+                                j -= 1 
+                            else:
+                                return 0
+                                break
+            return cout_total
+        else:
+            return -1
+                        
+                    
+                     
+                
+            
+        
+        
+        
+        
         
 if __name__ == "__main__":
     
