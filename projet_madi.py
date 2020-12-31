@@ -384,7 +384,7 @@ class Visualisation():
             self._totalcosts = None 
             self._dessin_couleur()
             self._costs.append(0)
-            print("self._costs ", self._costs)
+            #print("self._costs ", self._costs)
             wg = tk.Label(window, text = self._costs[0], fg = "#5E5E64", font = "Verdana " + str(int(-0.5 * self.case_px)) + " bold")
             wg.pack(side = tk.LEFT, padx = 5, pady = 5)
             self._costs_labels.append(wg)
@@ -651,6 +651,8 @@ def pol_pl_mixte(grille, gamma, M, mode = "couleur", verbose = False):
     -------
     pol : numpy.ndarray
         Tableau 3D représentant une stratégie mixte. 
+    obj_val : float ou list(float)
+        Valeur de la fonction objectif à l'optimum.
     """
 
     # On créé le pl
@@ -684,17 +686,32 @@ def pol_pl_mixte(grille, gamma, M, mode = "couleur", verbose = False):
     pl.optimize()
     # On créé les probabilités
     strat = None
+    obj_val = None
     # On teste si on a une vrai solution
     if pl.status == gp.GRB.OPTIMAL:
         # Recuperation des solutions
         strat = np.ones((*grille.tab.shape, 4))
         solution = pl.getAttr("x", xsa)
-        print('Obj: %g' % pl.objVal)
         for key, val in solution.items():
             strat[key] = val
+            
+        # Dans le mode somme_chiffre, on retourne les objectifs à l'optimum
+        # selon chacun des critères
+        if mode == "somme_chiffre":
+            obj_val = []
+            for c in range(len(grille.tab_cost)):
+                # On ne garde que les rewards de la couleur c
+                reward_c = dict(filter(lambda item: grille.tab[item[0][0], item[0][1]] == c, reward.items()))
+                for a in range(4):
+                    reward_c[(lig - 1, col - 1, a)] = M
+                obj_val.append(solution.prod(reward_c).getValue())
+        # Sinon, on retourne simplement l'objectif
+        else:
+            obj_val = pl.objVal
+            
         # Normalisation pour trouver les probabilités
         strat = strat / strat.sum(2).reshape((lig, col, 1))  
-    return strat
+    return strat, obj_val
 
 def pol_pl_pure(grille, gamma, M, mode = "couleur", verbose = False):
     """    
@@ -726,6 +743,10 @@ def pol_pl_pure(grille, gamma, M, mode = "couleur", verbose = False):
     -------
     pol : numpy.ndarray
         Tableau 2D représentant une stratégie pure. 
+    obj_val : float
+        Valeur de la fonction objectif à l'optimum dans le cas du mode
+        'couleur', ou liste avec les valeurs selon chaque critère dans le
+        mode 'somme_chiffre'.
     """
     # On créé le pl
     pl = gp.Model("mixte")
@@ -767,17 +788,17 @@ def pol_pl_pure(grille, gamma, M, mode = "couleur", verbose = False):
     pl.optimize()
     # On créé les probabilités
     strat = None
+    obj_val = None
     # On teste si on a une vrai solution
     if pl.status == gp.GRB.OPTIMAL:
+        obj_val = pl.objVal
         # Recuperation des solutions
         strat = np.zeros(grille.tab.shape, dtype = int)
         solution = pl.getAttr("x", dsa)
-#        print(print('Obj: %g' % m.objVal))
-        print('Obj: %g' % pl.objVal)
         for (i, j, a), val in solution.items():
             if val == 1:
                 strat[i, j] = a
-    return strat
+    return strat, obj_val
 
 
 def pol_pl_mixte_mo(grille, gamma, M, verbose = False):
@@ -804,6 +825,8 @@ def pol_pl_mixte_mo(grille, gamma, M, verbose = False):
     -------
     pol : numpy.ndarray
         Tableau 3D représentant une stratégie mixte. 
+    obj_val : list(float)
+        Valeur à l'optimum de l'objectif selon chaque critère.
     """
     
     # On créé le pl
@@ -837,26 +860,32 @@ def pol_pl_mixte_mo(grille, gamma, M, verbose = False):
                   if grille.tab[i, j] >= 0), "contr")
     
     # On ajoute les contraintes lieés à z
+    rewards_c = []
     for c in range(len(grille.tab_cost)):
         reward_c = dict(filter(lambda item: grille.tab[item[0][0], item[0][1]] == c, reward.items()))
         for a in range(4):
             reward_c[(lig - 1, col - 1, a)] = M
         pl.addConstr(z <= xsa.prod(reward_c), "contr_color_" + str(c))
+        rewards_c.append(reward_c)
     
     # L'optimisation
     pl.optimize()
     # On créé les probabilités
     strat = None
-    # On teste si on a une vrai solution
+    obj_val = None
+    # On teste si on a une vraie solution
     if pl.status == gp.GRB.OPTIMAL:
+        obj_val = []
         # Recuperation des solutions
         strat = np.ones((*grille.tab.shape, 4))
         solution = pl.getAttr("x", xsa)
+        for reward_c in rewards_c:
+            obj_val.append(solution.prod(reward_c).getValue())
         for key, val in solution.items():
             strat[key] = val
         # Normalisation pour trouver les probabilités
         strat = strat / strat.sum(2).reshape((lig, col, 1))  
-    return strat
+    return strat, obj_val
 
 
 def tester_temps(fonction, list_grille, repeat = 10, **kwargs):
@@ -940,7 +969,7 @@ def calcul_cout_pol(grille, strategy):
             while b:
 
                 if ((i,j) == (grille.shape[0] - 1 , grille.shape[1] - 1) ):
-                    print ("(i,j)", (i,j))
+                    #print ("(i,j)", (i,j))
                     b = False
                     return cout_total
                     break
@@ -1009,8 +1038,8 @@ if __name__ == "__main__":
     cost = [1, 2, 3, 4]
     width = 5
     height = 5
-    gamma = 0.9
-    M = 1000
+    gamma = 0.99
+    M = 0.1
     
     strategy_pur = np.random.choice(4, (height, width))
     strategy_mixte = np.random.uniform(size = (height, width, 4))
@@ -1020,11 +1049,12 @@ if __name__ == "__main__":
    
     g = Grille(height, width, tab_cost = cost, p = 0.6, proba_mur = 0.1)
     
-    strategy_valeur, nb_iter =  pol_valeur(g, gamma = gamma, M = M)
-    strategy_pl_mixte = pol_pl_mixte(g, gamma = gamma, M = M)
-    strategy_pl_pure = pol_pl_pure(g, gamma = gamma, M = M)
-    s = pol_pl_mixte_mo(g, gamma, M)
-    
+    #strategy_valeur, nb_iter =  pol_valeur(g, gamma = gamma, M = M)
+    strategy_pl_mixte, obj_val_somme = pol_pl_mixte(g, gamma = gamma, M = M, mode = "somme_chiffre")
+    #strategy_pl_pure, _ = pol_pl_pure(g, gamma = gamma, M = M)
+    s, obj_val = pol_pl_mixte_mo(g, gamma, M)
+    print(obj_val)
+    print(obj_val_somme)
         
     v = Visualisation(g, color)
     #v.view(case_px = 50, mode = "couleur", strategy = strategy_valeur)
