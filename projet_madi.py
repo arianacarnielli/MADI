@@ -239,6 +239,8 @@ class Grille():
         Deux modes: ‘couleur’ et ‘somme_chiffre’.
         Mode ‘couleur’ retourne le coût basé sur le tableau tab_coul.
         Mode ‘somme_chiffre’ retourne le coût basé sur le tableau chiffre.
+        Mode 'chiffre' retourne un tuple avec le coût basé sur le tableau
+        chiffre et la couleur de la case.
 
         Parameters
         ----------
@@ -247,17 +249,19 @@ class Grille():
         j : int
             Indice de colonne de la case.
         mode : String
-            Le mode de calcul du coût. 'couleur' ou 'somme_chiffre'.
+            Le mode de calcul du coût. 'couleur', 'somme_chiffre' ou 'chiffre'.
 
         Returns
         -------
-        int :
+        int ou tuple(int, int):
             Coût de la case d'après le mode choisi.
         """
         if mode == "couleur":
             return self.tab_cost[self.tab[i, j]]
         elif mode == "somme_chiffre":
             return self.chiffre[i, j]
+        elif mode == "chiffre":
+            return self.chiffre[i, j], self.tab[i, j]
         
     def est_possible(self):
         """
@@ -553,6 +557,74 @@ class Visualisation():
                 else:
                     self._canevas.create_rectangle(x0, y0, x0 + self.case_px, y0 + self.case_px, fill = "#5E5E64")       
 
+def simulation(grille, strategy, gamma, bonus, mode = "couleur", maxIter = 10000, init_robot = (0, 0)):
+    """
+    Simule une stratégie pure ou mixte sur une grille.
+    
+    Parameters
+    ----------
+    grille : Grille
+        La grille sur laquelle on veut tester la stratégie.
+    strategy : numpy.ndarray
+        La stratégie à tester.
+    gamma : float
+        Le gamma (taux d'amortissement) utilisé dans le calcul.
+    bonus : int
+        Le bonus reçu (une seule fois) dans la case cible. Lié avec le
+        paramètre M par bonus = M/(1-gamma).
+    mode : string
+        Le mode de calcul : 'couleur' pour calculer un cout scalaire avec le
+        cout associé à chaque couleur, 'chiffre' pour calculer un cout
+        vectoriel selon les valeurs de grille.chiffre et les différents
+        critères associés à chaque couleur.
+    maxIter : int
+        Nombre maximal d'itérations.
+    init_robot : tuple(int, int)
+        Position initiale du robot.
+
+    Returns
+    -------
+    float ou list(float)
+        Le cout observé (float en mode 'couleur', liste de float en mode
+        'chiffre').
+    """
+    assert mode in ["couleur", "chiffre"], "Le mode doit être 'couleur' ou 'chiffre'"
+    robot = init_robot
+    gamma_iter = 1
+    cpt_iter = 0
+    pure = strategy.ndim == 2
+    but = (grille.tab.shape[0] - 1, grille.tab.shape[1] - 1)
+    if mode == "couleur":
+        cout = 0
+    else:
+        cout = [0]*len(grille.tab_cost)
+
+    while robot != but and cpt_iter < maxIter:
+        cpt_iter += 1
+        
+        # Coût de sortie de la case
+        cout_case = grille.case_cout(*robot, mode)
+        if mode == "couleur":
+            cout += gamma_iter * cout_case
+        else:
+            cout[cout_case[1]] += gamma_iter * cout_case[0]
+        gamma_iter *= gamma
+        
+        # Mouvement vers la prochaine case
+        if pure:
+            direction = strategy[robot]
+        else:
+            direction = np.random.choice(4, p = strategy[robot])
+        dict_probas = grille.proba_trans(*robot, direction)
+        cases, p = zip(*dict_probas.items())
+        robot = random.choices(cases, p)[0]
+        
+    # Récompense d'arrivée de la case but et retour :
+    if mode == "couleur":
+        return gamma_iter * bonus - cout
+    else:
+        return [gamma_iter * bonus - ci for ci in cout]
+
 def pol_valeur(grille, gamma, M, eps = 1e-5, mode = "couleur"):
     """
     Calcule la stratégie optimale pour une grille donnée avec un gamma et une 
@@ -652,7 +724,9 @@ def pol_pl_mixte(grille, gamma, M, mode = "couleur", verbose = False):
     pol : numpy.ndarray
         Tableau 3D représentant une stratégie mixte. 
     obj_val : float ou list(float)
-        Valeur de la fonction objectif à l'optimum.
+        Valeur de la fonction objectif à l'optimum dans le cas du mode
+        'couleur', ou liste avec les valeurs selon chaque critère dans le
+        mode 'somme_chiffre'.
     """
 
     # On créé le pl
@@ -670,8 +744,11 @@ def pol_pl_mixte(grille, gamma, M, mode = "couleur", verbose = False):
     
     # On reajuste le coefficient de la case but 
     for a in range(4):
-        reward[(lig - 1, col - 1, a)] = M
-        
+        if mode == "couleur":
+            reward[(lig - 1, col - 1, a)] = M
+        else:
+            reward[(lig - 1, col - 1, a)] = M * len(grille.tab_cost)
+            
     # On ajoute les variables et la fonction objectif
     xsa = pl.addVars(var, name = "x")
     pl.setObjective(xsa.prod(reward), gp.GRB.MAXIMIZE)
@@ -744,9 +821,7 @@ def pol_pl_pure(grille, gamma, M, mode = "couleur", verbose = False):
     pol : numpy.ndarray
         Tableau 2D représentant une stratégie pure. 
     obj_val : float
-        Valeur de la fonction objectif à l'optimum dans le cas du mode
-        'couleur', ou liste avec les valeurs selon chaque critère dans le
-        mode 'somme_chiffre'.
+        Valeur de la fonction objectif à l'optimum.
     """
     # On créé le pl
     pl = gp.Model("mixte")
@@ -1038,20 +1113,19 @@ if __name__ == "__main__":
     cost = [1, 2, 3, 4]
     width = 5
     height = 5
-    gamma = 0.99
-    M = 0.1
+    gamma = 0.9
+    M = 10
     
-    strategy_pur = np.random.choice(4, (height, width))
-    strategy_mixte = np.random.uniform(size = (height, width, 4))
-    strategy_mixte = strategy_mixte / strategy_mixte.sum(2).reshape((height, width, 1))
-    strategy_mixte2 = np.ones((height, width, 4))/4
-    
+    #strategy_pur = np.random.choice(4, (height, width))
+    #strategy_mixte = np.random.uniform(size = (height, width, 4))
+    #strategy_mixte = strategy_mixte / strategy_mixte.sum(2).reshape((height, width, 1))
+    #strategy_mixte2 = np.ones((height, width, 4))/4
    
     g = Grille(height, width, tab_cost = cost, p = 0.6, proba_mur = 0.1)
     
-    #strategy_valeur, nb_iter =  pol_valeur(g, gamma = gamma, M = M)
+    strategy_valeur, nb_iter =  pol_valeur(g, gamma = gamma, M = M)
     strategy_pl_mixte, obj_val_somme = pol_pl_mixte(g, gamma = gamma, M = M, mode = "somme_chiffre")
-    #strategy_pl_pure, _ = pol_pl_pure(g, gamma = gamma, M = M)
+    strategy_pl_pure, _ = pol_pl_pure(g, gamma = gamma, M = M)
     s, obj_val = pol_pl_mixte_mo(g, gamma, M)
     print(obj_val)
     print(obj_val_somme)
