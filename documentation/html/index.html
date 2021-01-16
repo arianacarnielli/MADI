@@ -1,0 +1,626 @@
+
+<!DOCTYPE html>
+
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Documentation Projet MADI</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/translations.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Recherche" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-projet_madi">
+<span id="documentation-du-projet-madi"></span><h1>Documentation du projet MADI<a class="headerlink" href="#module-projet_madi" title="Lien permanent vers ce titre">¶</a></h1>
+<p>Created on Mon Dec  7 21:01:59 2020</p>
+<p>Projet MADI
+Algorithmes pour la planification dans le risque</p>
+<p>&#64;author: Clémence BOURGUE
+&#64;author: Ariana CARNIELLI</p>
+<dl class="py class">
+<dt id="projet_madi.Grille">
+<em class="property">class </em><code class="sig-prename descclassname">projet_madi.</code><code class="sig-name descname">Grille</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nb_lig</span></em>, <em class="sig-param"><span class="n">nb_col</span></em>, <em class="sig-param"><span class="n">tab_cost</span><span class="o">=</span><span class="default_value">[1, 2, 3, 4]</span></em>, <em class="sig-param"><span class="n">p</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">proba_coul</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">proba_mur</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">proba_nb</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Grille" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Représente la grille.
+La grille est représentée par 2 arrays numpy 2D d’entiers, une où chaque
+entier représente une couleur et une ou chaque entier représente un poids
+entre 1 et 9.
+Initialise la grille des couleurs et des poids de façon aléatoire en
+utilisant la liste de probabilités proba_coul pour la grille de couleurs et
+la liste de probabilités proba_nb pour les poids.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nb_lig</strong> (<em>int</em>) – Nombre de lignes de la grille.</p></li>
+<li><p><strong>nb_col</strong> (<em>int</em>) – Nombre de colonnes de la grille.</p></li>
+<li><p><strong>tab_cost</strong> (<em>list</em><em>(</em><em>int</em><em>)</em>) – Liste des coûts de chaque couleur. Le défaut est [1, 2, 3, 4].</p></li>
+<li><p><strong>p</strong> (<em>float</em>) – Probabilité d’atteindre la case cible. Le défaut vaut 1.</p></li>
+<li><p><strong>proba_coul</strong> (<em>list</em><em>(</em><em>float</em><em>)</em>) – Liste des probabilités pour l’occurrence de chaque couleur
+(taille égale à la taille de tab_cost) si None, probabilité uniforme.
+Le défaut est None.</p></li>
+<li><p><strong>proba_mur</strong> (<em>float</em>) – Probabilité d’occurrence des murs. Le défaut vaut 0.</p></li>
+<li><p><strong>proba_nb</strong> (<em>list</em><em>(</em><em>float</em><em>)</em>) – </p></li>
+<li><p><strong>des probabilités pour l'occurrence de chaque chiffre entre 1</strong> (<em>Liste</em>) – </p></li>
+<li><p><strong>9. Si None</strong> (<em>et</em>) – </p></li>
+<li><p><strong>uniforme. Le défaut est None.</strong> (<em>probabilité</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="projet_madi.Grille.tab">
+<code class="sig-name descname">tab</code><a class="headerlink" href="#projet_madi.Grille.tab" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Tableau représentant la grille. Chaque case contient un nombre
+indiquant à quelle couleur la case est associée. Les cases avec -1
+contiennent des murs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="projet_madi.Grille.tab_cost">
+<code class="sig-name descname">tab_cost</code><a class="headerlink" href="#projet_madi.Grille.tab_cost" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Liste des coûts de chaque couleur.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list(int)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="projet_madi.Grille.p">
+<code class="sig-name descname">p</code><a class="headerlink" href="#projet_madi.Grille.p" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Probabilité d’atteindre la case cible.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="projet_madi.Grille.chiffre">
+<code class="sig-name descname">chiffre</code><a class="headerlink" href="#projet_madi.Grille.chiffre" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Tableau représentant les prix de la grille. Chaque case contient un
+chiffre entre 1 et 9.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="projet_madi.Grille.case_cout">
+<code class="sig-name descname">case_cout</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em>, <em class="sig-param"><span class="n">j</span></em>, <em class="sig-param"><span class="n">mode</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Grille.case_cout" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Retourne le coût de la case (i, j) d’après le mode de calcul.
+Deux modes: ‘couleur’ et ‘somme_chiffre’.
+Mode ‘couleur’ retourne le coût basé sur le tableau tab_coul.
+Mode ‘somme_chiffre’ retourne le coût basé sur le tableau chiffre.
+Mode “chiffre” retourne un tuple avec le coût basé sur le tableau
+chiffre et la couleur de la case.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> (<em>int</em>) – Indice de ligne de la case.</p></li>
+<li><p><strong>j</strong> (<em>int</em>) – Indice de colonne de la case.</p></li>
+<li><p><strong>mode</strong> (<em>String</em>) – Le mode de calcul du coût. “couleur”, “somme_chiffre” ou “chiffre”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Renvoie</dt>
+<dd class="field-even"><p>Coût de la case d’après le mode choisi.</p>
+</dd>
+<dt class="field-odd">Type renvoyé</dt>
+<dd class="field-odd"><p>int ou tuple(int, int)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="projet_madi.Grille.case_possible">
+<code class="sig-name descname">case_possible</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em>, <em class="sig-param"><span class="n">j</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Grille.case_possible" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Retourne True si la case (i, j) est atteignable, False sinon.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> (<em>int</em>) – Indice de ligne de la case.</p></li>
+<li><p><strong>j</strong> (<em>int</em>) – Indice de colonne de la case.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Renvoie</dt>
+<dd class="field-even"><p>True si case atteignable, False sinon.</p>
+</dd>
+<dt class="field-odd">Type renvoyé</dt>
+<dd class="field-odd"><p>boolean</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="projet_madi.Grille.est_possible">
+<code class="sig-name descname">est_possible</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Grille.est_possible" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Teste si la case but de la grille est atteignable depuis la case
+initiale (plus en haut et à gauche).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Renvoie</dt>
+<dd class="field-odd"><p><strong>_</strong> – True si la case but est atteignable, False sinon.</p>
+</dd>
+<dt class="field-even">Type renvoyé</dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="projet_madi.Grille.proba_trans">
+<code class="sig-name descname">proba_trans</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em>, <em class="sig-param"><span class="n">j</span></em>, <em class="sig-param"><span class="n">action</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Grille.proba_trans" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Calcule les cases atteignables a partir d’une case (i, j) quelconque en
+prenant l’action a, et les respectives probabilités.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> (<em>int</em>) – Indice de ligne de la case.</p></li>
+<li><p><strong>j</strong> (<em>int</em>) – Indice de colonne de la case.</p></li>
+<li><p><strong>a</strong> (<em>int</em>) – L’action à réaliser. L’encodage est 0-haut, 1-droite, 2-bas,
+3-gauche.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Renvoie</dt>
+<dd class="field-even"><p><strong>cases_p</strong> – Dictionnaire indexé par les cases atteignables et contenant les
+probabilités d’atteindre chaque case.</p>
+</dd>
+<dt class="field-odd">Type renvoyé</dt>
+<dd class="field-odd"><p>defaultdict((int, int), float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="projet_madi.Grille.proba_trans_arr">
+<code class="sig-name descname">proba_trans_arr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em>, <em class="sig-param"><span class="n">j</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Grille.proba_trans_arr" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Calcule un dictionnaire avec les probabilités T((i’, j’), a, (i, j)),
+utilisé dans les calculs des PL.
+Les clés sont des triplets (i’, j’, a) des cases qui peuvent atteindre
+une case (i, j) en faisant l’action a et les valeurs sont les
+probabilités d’atteindre la case (i, j).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> (<em>int</em>) – Indice de ligne de la case.</p></li>
+<li><p><strong>j</strong> (<em>int</em>) – Indice de colonne de la case.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Renvoie</dt>
+<dd class="field-even"><p><strong>cases_p</strong> – Dictionnaire indexé par les cases et actions et contenant les
+probabilités d’atteindre la case (i, j).</p>
+</dd>
+<dt class="field-odd">Type renvoyé</dt>
+<dd class="field-odd"><p>defaultdict((int, int), float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="projet_madi.Visualisation">
+<em class="property">class </em><code class="sig-prename descclassname">projet_madi.</code><code class="sig-name descname">Visualisation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">grille</span></em>, <em class="sig-param"><span class="n">tab_coul</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Visualisation" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Classe créée pour faciliter la visualisation des grilles et la
+movimentation du robot.
+Permet la visualisation des deux types de grille avec un guidage manuel du
+robot par les flèches du clavier, en montrant les coûts accrus en temps
+réel. On peut aussi visualiser des flèches indiquant l’action optimale
+d’après une politique stationnaire déterministe et utiliser une politique
+déterministe ou mixte pour le guidage automatique du robot en tapant la
+touche ‘espace’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grille</strong> (<a class="reference internal" href="#projet_madi.Grille" title="projet_madi.Grille"><em>Grille</em></a>) – La grille à visualiser.</p></li>
+<li><p><strong>tab_coul</strong> (<em>list</em><em>(</em><em>string</em><em>)</em>) – List avec les codes hexadécimaux des couleurs utilisés dans la
+visualisation de la grille. Doit avoir au moins la même quantité que
+des couleurs dans la grille.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="projet_madi.Visualisation.grille">
+<code class="sig-name descname">grille</code><a class="headerlink" href="#projet_madi.Visualisation.grille" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>La grille à visualiser.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#projet_madi.Grille" title="projet_madi.Grille">Grille</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="projet_madi.Visualisation.tab_coul">
+<code class="sig-name descname">tab_coul</code><a class="headerlink" href="#projet_madi.Visualisation.tab_coul" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>List avec les codes hexadécimaux des couleurs utilisés dans la
+visualisation de la grille. Doit avoir au moins la même quantité que
+des couleurs dans la grille.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list(string)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="projet_madi.Visualisation.case_px">
+<code class="sig-name descname">case_px</code><a class="headerlink" href="#projet_madi.Visualisation.case_px" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>La taille en pixels d’une case de la grille. Le défaut est 40.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="projet_madi.Visualisation.strategy">
+<code class="sig-name descname">strategy</code><a class="headerlink" href="#projet_madi.Visualisation.strategy" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Tableau représentant une stratégie. Chaque case contient soit un nombre
+entre 0 et 3 indiquant à quelle case voisine le robot doit aller ou une
+distribution de probabilités pour les cases voisines.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="projet_madi.Visualisation._clavier">
+<code class="sig-name descname">_clavier</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Visualisation._clavier" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Controle du robot par les flèches du clavier et action automatique
+d’après une stratégie avec la touche espace.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="projet_madi.Visualisation._dessin_chiffre">
+<code class="sig-name descname">_dessin_chiffre</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Visualisation._dessin_chiffre" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Dessine les cases de la grille dans le mode “chiffre”. On a un chiffre
+coloré dans chaque case.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="projet_madi.Visualisation._dessin_couleur">
+<code class="sig-name descname">_dessin_couleur</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Visualisation._dessin_couleur" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Dessine les cases de la grille dans le mode “couleur”. On a un petit
+circle coloré dans chaque case.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="projet_madi.Visualisation._dessin_fleche">
+<code class="sig-name descname">_dessin_fleche</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Visualisation._dessin_fleche" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Dessine les flèches indiquant la meilleure choix si on a une stratégie
+pure. On dessine aussi une flèche en dessus du pion.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="projet_madi.Visualisation._dessin_grid">
+<code class="sig-name descname">_dessin_grid</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">largeur</span></em>, <em class="sig-param"><span class="n">hauteur</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Visualisation._dessin_grid" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Dessine les droites du grid de la grille.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="projet_madi.Visualisation._move">
+<code class="sig-name descname">_move</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">action</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Visualisation._move" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Bouge le robot et la flèche en dessus si elle existe.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="projet_madi.Visualisation._reinitialize">
+<code class="sig-name descname">_reinitialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Visualisation._reinitialize" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Réinitialise la visualisation de la grille.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="projet_madi.Visualisation.view">
+<code class="sig-name descname">view</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">case_px</span><span class="o">=</span><span class="default_value">40</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'couleur'</span></em>, <em class="sig-param"><span class="n">strategy</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.Visualisation.view" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Permet la visualisation de la grille dans une fenêtre à l’aide du
+module Tkinter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>case_px</strong> (<em>int</em>) – La taille en pixels d’une case de la grille. Le défaut est 40.</p></li>
+<li><p><strong>mode</strong> (<em>string</em>) – Le mode de visualisation. Peut être “couleur” ou “chiffre”.
+The default is “couleur”.
+Le mode “couleur” correspond à la grille présenté dans la partie 2
+et 3. Le mode “chiffre” correspond à la grille présenté dans la
+partie 4.</p></li>
+<li><p><strong>strategy</strong> (<em>numpy.ndarray</em>) – Tableau représentant une stratégie. Peut être 2D (si stratégie
+pure) ou 3D (si stratégie mixte). The default is None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="projet_madi.pol_pl_mixte">
+<code class="sig-prename descclassname">projet_madi.</code><code class="sig-name descname">pol_pl_mixte</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">grille</span></em>, <em class="sig-param"><span class="n">gamma</span></em>, <em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'couleur'</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.pol_pl_mixte" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Calcule la stratégie optimale pour une grille donnée, avec un gamma et une
+récompense finale passées en argument, en utilisant un PL. Le mode indique
+quels coûts utiliser pour le calcul. La stratégie calculé est “mixte” (une
+distribution de probabilités).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grille</strong> (<a class="reference internal" href="#projet_madi.Grille" title="projet_madi.Grille"><em>Grille</em></a>) – La Grille pour laquelle on calcule la stratégie optimale.</p></li>
+<li><p><strong>gamma</strong> (<em>float</em>) – Le gamma (taux d’amortissement) utilisé dans le calcul.</p></li>
+<li><p><strong>M</strong> (<em>int</em>) – La récompense de la case but.</p></li>
+<li><p><strong>mode</strong> (<em>String</em>) – Avec quel coût calculer la stratégie. Deux modes: “couleur” et
+“somme_chiffre”.
+“couleur” calcule la stratégie avec les coûts en tab_cost (partie 2 de
+l’énoncé).
+“somme_chiffre” calcule la stratégie avec la somme des coûts en chiffre
+(partie 4a de l’enoncé). Le défaut est “couleur”.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – If True, shows the resolution of the PL calculated by Gurobi. Le défaut
+est False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Renvoie</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>pol</strong> (<em>numpy.ndarray</em>) – Tableau 3D représentant une stratégie mixte.</p></li>
+<li><p><strong>obj_val</strong> (<em>float ou list(float)</em>) – Valeur de la fonction objectif à l’optimum dans le cas du mode
+“couleur”, ou liste avec les valeurs selon chaque critère dans le
+mode “somme_chiffre”.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="projet_madi.pol_pl_mixte_mo">
+<code class="sig-prename descclassname">projet_madi.</code><code class="sig-name descname">pol_pl_mixte_mo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">grille</span></em>, <em class="sig-param"><span class="n">gamma</span></em>, <em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.pol_pl_mixte_mo" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Calcule la stratégie optimale pour une grille donnée, avec un gamma et une
+récompense finale passées en argument, en utilisant un PL. Cette fonction
+est spécifique pour la grille multi-objectifs avec comme fonction
+d’agrégation un critère max min(celle de la partie 4b).
+La stratégie calculé est “mixte” (une distribution de probabilités).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grille</strong> (<a class="reference internal" href="#projet_madi.Grille" title="projet_madi.Grille"><em>Grille</em></a>) – La Grille pour laquelle on calcule la stratégie optimale.</p></li>
+<li><p><strong>gamma</strong> (<em>float</em>) – Le gamma (taux d’amortissement) utilisé dans le calcul.</p></li>
+<li><p><strong>M</strong> (<em>int</em>) – La récompense de la case but.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – If True, shows the resolution of the PL calculated by Gurobi. Le défaut
+est False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Renvoie</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>pol</strong> (<em>numpy.ndarray</em>) – Tableau 3D représentant une stratégie mixte.</p></li>
+<li><p><strong>obj_val</strong> (<em>list(float)</em>) – Valeur à l’optimum de l’objectif selon chaque critère.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="projet_madi.pol_pl_pure">
+<code class="sig-prename descclassname">projet_madi.</code><code class="sig-name descname">pol_pl_pure</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">grille</span></em>, <em class="sig-param"><span class="n">gamma</span></em>, <em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'couleur'</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.pol_pl_pure" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Calcule la stratégie optimale pour une grille donnée, avec un gamma et une
+récompense finale passées en argument, en utilisant un PLNE. Le mode
+indique quels coûts utiliser pour le calcul. La stratégie calculé est
+“pure” (une seule valeur par case).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grille</strong> (<a class="reference internal" href="#projet_madi.Grille" title="projet_madi.Grille"><em>Grille</em></a>) – La Grille pour laquelle on calcule la stratégie optimale.</p></li>
+<li><p><strong>gamma</strong> (<em>float</em>) – Le gamma (taux d’amortissement) utilisé dans le calcul.</p></li>
+<li><p><strong>M</strong> (<em>int</em>) – La récompense de la case but.</p></li>
+<li><p><strong>mode</strong> (<em>String</em>) – Avec quel coût calculer la stratégie. Deux modes: “couleur” et
+“somme_chiffre”.
+“couleur” calcule la stratégie avec les coûts en tab_cost (partie 2 de
+l’énoncé).
+“somme_chiffre” calcule la stratégie avec la somme des coûts en chiffre
+(partie 4a de l’enoncé). Le défaut est “couleur”.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – If True, shows the resolution of the PLNE calculated by Gurobi. Le
+défaut est False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Renvoie</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>pol</strong> (<em>numpy.ndarray</em>) – Tableau 2D représentant une stratégie pure.</p></li>
+<li><p><strong>obj_val</strong> (<em>float</em>) – Valeur de la fonction objectif à l’optimum.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="projet_madi.pol_valeur">
+<code class="sig-prename descclassname">projet_madi.</code><code class="sig-name descname">pol_valeur</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">grille</span></em>, <em class="sig-param"><span class="n">gamma</span></em>, <em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'couleur'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.pol_valeur" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Calcule la stratégie optimale pour une grille donnée avec un gamma et une
+récompense finale passées en argument, en utilisant l’algorithme
+d’itération de la valeur. Le critère d’arrêt de l’approximation est aussi
+passé en argument, ainsi que le mode (i.e quel coûts utiliser pour le
+calcul).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grille</strong> (<a class="reference internal" href="#projet_madi.Grille" title="projet_madi.Grille"><em>Grille</em></a>) – La Grille pour laquelle on calcule la stratégie optimale.</p></li>
+<li><p><strong>gamma</strong> (<em>float</em>) – Le gamma (taux d’amortissement) utilisé dans le calcul.</p></li>
+<li><p><strong>M</strong> (<em>int</em>) – La récompense de la case but.</p></li>
+<li><p><strong>eps</strong> (<em>float</em>) – Le critère d’arrêt utilisé dans le calcul. Le défaut est 1e-5.</p></li>
+<li><p><strong>mode</strong> (<em>String</em>) – Avec quel coût calculer la stratégie. Deux modes: “couleur” et
+“somme_chiffre”.
+“couleur” calcule la stratégie avec les coûts en tab_cost (partie 2 de
+l’énoncé).
+“somme_chiffre” calcule la stratégie avec la somme des coûts en chiffre
+(partie 4a de l’enoncé). Le défaut est “couleur”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Renvoie</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>pol</strong> (<em>numpy.ndarray</em>) – Tableau 2D représentant une stratégie pure.</p></li>
+<li><p><strong>cpt</strong> (<em>int</em>) – La quantité d’itérations avant la convergence de l’algorithme.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="projet_madi.simulation">
+<code class="sig-prename descclassname">projet_madi.</code><code class="sig-name descname">simulation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">grille</span></em>, <em class="sig-param"><span class="n">strategy</span></em>, <em class="sig-param"><span class="n">gamma</span></em>, <em class="sig-param"><span class="n">bonus</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'couleur'</span></em>, <em class="sig-param"><span class="n">maxIter</span><span class="o">=</span><span class="default_value">10000</span></em>, <em class="sig-param"><span class="n">init_robot</span><span class="o">=</span><span class="default_value">0, 0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.simulation" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Simule une stratégie pure ou mixte sur une grille.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grille</strong> (<a class="reference internal" href="#projet_madi.Grille" title="projet_madi.Grille"><em>Grille</em></a>) – La grille sur laquelle on veut tester la stratégie.</p></li>
+<li><p><strong>strategy</strong> (<em>numpy.ndarray</em>) – La stratégie à tester.</p></li>
+<li><p><strong>gamma</strong> (<em>float</em>) – Le gamma (taux d’amortissement) utilisé dans le calcul.</p></li>
+<li><p><strong>bonus</strong> (<em>int</em>) – Le bonus reçu (une seule fois) dans la case cible. Lié avec le
+paramètre M par bonus = M/(1-gamma).</p></li>
+<li><p><strong>mode</strong> (<em>string</em>) – Le mode de calcul : “couleur” pour calculer un cout scalaire avec le
+cout associé à chaque couleur, “chiffre” pour calculer un cout
+vectoriel selon les valeurs de grille.chiffre et les différents
+critères associés à chaque couleur.</p></li>
+<li><p><strong>maxIter</strong> (<em>int</em>) – Nombre maximal d’itérations.</p></li>
+<li><p><strong>init_robot</strong> (<em>tuple</em><em>(</em><em>int</em><em>, </em><em>int</em><em>)</em>) – Position initiale du robot.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Renvoie</dt>
+<dd class="field-even"><p>Le cout observé (float en mode “couleur”, liste de float en mode
+“chiffre”).</p>
+</dd>
+<dt class="field-odd">Type renvoyé</dt>
+<dd class="field-odd"><p>float ou list(float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="projet_madi.tester_iterations">
+<code class="sig-prename descclassname">projet_madi.</code><code class="sig-name descname">tester_iterations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fonction</span></em>, <em class="sig-param"><span class="n">list_grille</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.tester_iterations" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Implémente le test de quantité d’itérations moyenne démandé à l’énoncé.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fonction</strong> (<em>Function</em>) – La fonction qu’on veut tester le temps d’exécution. Il faut qu’elle
+prenne une grille en argument.</p></li>
+<li><p><strong>list_grille</strong> (<em>list</em><em>(</em><a class="reference internal" href="#projet_madi.Grille" title="projet_madi.Grille"><em>Grille</em></a><em>)</em>) – Liste avec toutes les Grilles qui doivent être testés.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments necessaires à la fonction testée.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Renvoie</dt>
+<dd class="field-even"><p>Le nombre moyen d’itérations de la fonction passée en argument.</p>
+</dd>
+<dt class="field-odd">Type renvoyé</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="projet_madi.tester_temps">
+<code class="sig-prename descclassname">projet_madi.</code><code class="sig-name descname">tester_temps</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fonction</span></em>, <em class="sig-param"><span class="n">list_grille</span></em>, <em class="sig-param"><span class="n">repeat</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#projet_madi.tester_temps" title="Lien permanent vers cette définition">¶</a></dt>
+<dd><p>Implémente le test de temps de calcul moyen démandé à l’énoncé.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fonction</strong> (<em>Function</em>) – La fonction qu’on veut tester le temps d’exécution. Il faut qu’elle
+prenne une grille en argument.</p></li>
+<li><p><strong>list_grille</strong> (<em>list</em><em>(</em><a class="reference internal" href="#projet_madi.Grille" title="projet_madi.Grille"><em>Grille</em></a><em>)</em>) – Liste avec toutes les Grilles qui doivent être testés.</p></li>
+<li><p><strong>repeat</strong> (<em>int</em>) – La quantité de fois chaque Grille aura une stratégie calculé. Le défaut
+est 10.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments necessaires à la fonction testée.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Renvoie</dt>
+<dd class="field-even"><p>Le temps moyen de calcul de la fonction passée en argument.</p>
+</dd>
+<dt class="field-odd">Type renvoyé</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">Projet MADI</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Clémence BOURGUE et Ariana CARNIELLI.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -2,6 +2,11 @@
 """
 Created on Mon Dec  7 21:01:59 2020
 
+Projet MADI
+Algorithmes pour la planification dans le risque
+
+@author: Clémence BOURGUE
+@author: Ariana CARNIELLI
 """
 import random
 import time
@@ -1016,90 +1021,10 @@ def tester_iterations(fonction, list_grille, **kwargs):
         _, nb_iter = fonction(grille, **kwargs)
         cpt_iter += nb_iter
     return cpt_iter / (len(list_grille))
-
-def calcul_cout_pol(grille, strategy):
-    """
-    Implémente le calcul de la valeur de la politique optimale.
-    
-    Parameters
-    ----------
-    strategy : 
-        Politique issue de la grille
-    grille : 
-        Grille dont on doit calculer la valeur de la politique.
-    
-
-    Returns
-    -------
-    int
-        La valeur de la politique executée sur la grille passée en argument.
-    """
-    if (grille is  None ) or (strategy is  None ):
-        return 0
-    else:
-        cout_total = 0
-        if len(strategy.shape)== 2:
-            i,j = 0,0
-            b = True 
-            while b:
-
-                if ((i,j) == (grille.shape[0] - 1 , grille.shape[1] - 1) ):
-                    #print ("(i,j)", (i,j))
-                    b = False
-                    return cout_total
-                    break
-                else:
-                    
-                    if grille [i,j] == -1 : #mur
-                        return -1
-                        break
-                    else:
-                        cout_total += (grille [i,j] +1)
-                        if (strategy[i,j]) == 0:
-    #                        cout_total += (grille [i,j] +1)
-                            if( i > 0 ) : 
-                                i -= 1 
-                            else:
-                                return 0
-                                break
-                        elif (strategy[i,j]) == 1:
-                            if( j < (grille.shape[1] - 1)) : 
-                                j += 1 
-                            else:
-                                return 0
-                                break
-    #                            cout_total += (grille [i,j] +1)
-                                            
-                                            
-                        elif (strategy[i,j]) == 2:
-                            if( i < (grille.shape[0] - 1)) : 
-                                i += 1 
-                            else:
-                                return 0
-                                break
-    #                        cout_total += (grille [i,j] +1)
-                        elif (strategy[i,j]) == 3:
-    #                        cout_total += (grille [i,j] +1)
-                            if( j > 0 ) : 
-                                j -= 1 
-                            else:
-                                return 0
-                                break
-            return cout_total
-        else:
-            return -1
-                        
-                    
-                     
-                
-            
-        
-        
-        
-        
+   
         
 if __name__ == "__main__":
-    
+    # Définition de noms de couleurs
     red = "#F70B42"
     green = "#1AD22C"
     blue = "#0B79F7"
@@ -1108,6 +1033,7 @@ if __name__ == "__main__":
     darkgray = "#5E5E64"
     white = "#FFFFFF"
     
+    # Paramètres
     nb_color = 4
     color = [green, blue, red, darkgray]
     cost = [1, 2, 3, 4]
@@ -1116,21 +1042,17 @@ if __name__ == "__main__":
     gamma = 0.9
     M = 10
     
-    #strategy_pur = np.random.choice(4, (height, width))
-    #strategy_mixte = np.random.uniform(size = (height, width, 4))
-    #strategy_mixte = strategy_mixte / strategy_mixte.sum(2).reshape((height, width, 1))
-    #strategy_mixte2 = np.ones((height, width, 4))/4
-   
+    # Création de la grille
     g = Grille(height, width, tab_cost = cost, p = 0.6, proba_mur = 0.1)
     
+    # Calcul de stratégies
     strategy_valeur, nb_iter =  pol_valeur(g, gamma = gamma, M = M)
     strategy_pl_mixte, obj_val_somme = pol_pl_mixte(g, gamma = gamma, M = M, mode = "somme_chiffre")
     strategy_pl_pure, _ = pol_pl_pure(g, gamma = gamma, M = M)
-    s, obj_val = pol_pl_mixte_mo(g, gamma, M)
-    print(obj_val)
-    print(obj_val_somme)
+    strategy_pl_mixte_mo, obj_val = pol_pl_mixte_mo(g, gamma, M)
         
+    # Visualisation
     v = Visualisation(g, color)
-    #v.view(case_px = 50, mode = "couleur", strategy = strategy_valeur)
+    v.view(case_px = 50, mode = "couleur", strategy = strategy_valeur)
         
         
